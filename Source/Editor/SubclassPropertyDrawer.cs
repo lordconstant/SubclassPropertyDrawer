@@ -55,17 +55,17 @@ public class SubclassPropertyDrawer : PropertyDrawer
 
             if (!m_selectorMap.TryGetValue(selectType, out selector))
             {
-                selector = new SubclassSelector(selectType, property.managedReferenceValue);
+                selector = new SubclassSelector(selectType, property.managedReferenceValue == null ? null : property.managedReferenceValue.GetType(), propertyAtt.IncludeSelf);
                 m_selectorMap.Add(selectType, selector);
             }
             else
             {
-                selector.RefreshSelection(property.managedReferenceValue);
+                selector.RefreshSelection(property.managedReferenceValue == null ? null : property.managedReferenceValue.GetType());
             }
 
             position.height = lineSize;
 
-            if (selector.Draw(position))
+            if (selector != null && selector.Draw(position))
             {
                 property.managedReferenceValue = selector.CreateSelected();
                 property.serializedObject.ApplyModifiedProperties();
@@ -96,6 +96,7 @@ public class SubclassPropertyDrawer : PropertyDrawer
                     {
                         while (!SerializedProperty.EqualContents(curProp, lastProp))
                         {
+                            position.height = EditorGUI.GetPropertyHeight(curProp);
                             EditorGUI.PropertyField(position, curProp);
 
                             position.y += fieldSpacing;
@@ -135,7 +136,7 @@ public class SubclassPropertyDrawer : PropertyDrawer
         if (property.hasVisibleChildren && property.isExpanded)
         {
             SerializedProperty curProp = property;
-
+            
             if (curProp.NextVisible(true))
             {
                 while (!SerializedProperty.EqualContents(curProp, lastProp))

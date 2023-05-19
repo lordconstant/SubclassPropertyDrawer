@@ -11,7 +11,7 @@ public class SubclassSelector
 
     int m_selectedType;
 
-    public SubclassSelector(System.Type InType, object InDefault = null)
+    public SubclassSelector(System.Type InType, System.Type InDefault = null, bool InIncludeSelf = false)
     {
         m_selectedType = -1;
 
@@ -21,6 +21,14 @@ public class SubclassSelector
          .SelectMany(assembly => assembly.GetTypes())
          .Where(type => type.IsSubclassOf(InType)).ToArray();
 
+        if (InIncludeSelf)
+        {
+            m_subClasses.Add(InType);
+
+            if (InDefault.GetType() == InType)
+                m_selectedType = 0;
+        }
+
         for (int i = 0; i < foundClasses.Length; i++)
         {
             if (foundClasses[i].ContainsGenericParameters)
@@ -28,7 +36,7 @@ public class SubclassSelector
 
             if (InDefault != null)
             {
-                if (InDefault.GetType() == foundClasses[i])
+                if (InDefault == foundClasses[i])
                     m_selectedType = m_subClasses.Count;
             }
 
@@ -43,7 +51,7 @@ public class SubclassSelector
         }
     }
 
-    public void RefreshSelection(object InDefault)
+    public void RefreshSelection(System.Type InDefault)
     {
         m_selectedType = -1;
 
@@ -52,7 +60,7 @@ public class SubclassSelector
             if (InDefault == null)
                 break;
 
-            if (InDefault.GetType() != m_subClasses[i])
+            if (InDefault != m_subClasses[i])
                 continue;
 
             m_selectedType = i;
@@ -102,11 +110,16 @@ public class SubclassSelector
     {
         return System.Activator.CreateInstance(m_subClasses[m_selectedType]);
     }
+
+    public System.Type GetClassType()
+    {
+        return m_subClasses[m_selectedType];
+    }
 }
 
 public class SubclassSelector<T> : SubclassSelector where T : class
 {
-    public SubclassSelector(T InDefault) : base(typeof(T), InDefault)
+    public SubclassSelector(System.Type InDefault) : base(typeof(T), InDefault)
     {
 
     }
